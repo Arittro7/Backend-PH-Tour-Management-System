@@ -29,7 +29,7 @@ export interface IUser{
   isActive ?:string;
   isVerified ?: string;
   role : Role;
-  auth : IAuthProvider[];
+  auths : IAuthProvider[];
   bookings ?: Types.ObjectId[];
   guides ?: Types.ObjectId[];
 }
