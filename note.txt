@@ -1,0 +1,71 @@
+27-11 Add custom property to Request Parameter of Express, req.user
+
+todo: will create a express custom property to store verified token
+
+it will mitigate the jwt verification
+
+BEFORE: 1. const token = req.headers.authorization
+        2. const verifiedToken = verifyToken(token as string, envVars.JWT_ACCESS_SECRET) as JwtPayload
+
+After:  1. const verifiedToken = req.user
+
+Step:
+  1. create a Interface folder in src>app>interface>index.d.ts
+  it will be a global interface file [thats imp to create this folder inside app folder]
+  
+  import { JwtPayload } from 'jsonwebtoken';
+  declare global {
+  namespace Express {
+    interface Request {
+      user : JwtPayload
+      }
+    }
+  }
+
+  step 2: 
+  update user.controller & checkAuth
+
+  const updateUser = catchAsync(async(req: Request, res: Response, next: NextFunction) => {
+  const userId = req.params.id;
+  // const token = req.headers.authorization
+  // const verifiedToken = verifyToken(token as string, envVars.JWT_ACCESS_SECRET) as JwtPayload
+
+  const verifiedToken = req.user
+
+  const payload = req.body
+  const user = await userServices.updateUser(userId, payload, verifiedToken)
+
+  sendResponse(res, {
+    success: true,
+    statusCode : httpStatus.CREATED,
+    message: "User Updated Successfully",
+    data: user
+  })
+})
+
+  export const checkAuth = (...authRoles : string[]) => async(req: Request, res: Response, next: NextFunction) =>{
+  try {
+    const accessToken = req.headers.authorization
+  
+  if(!accessToken){
+    throw new AppError(403, "No Token Received")
+  }
+
+  const verifiedToken = verifyToken(accessToken, envVars.JWT_ACCESS_SECRET) as JwtPayload   
+
+  if(!authRoles.includes(verifiedToken.role)){
+    throw new AppError (403, "You are not permitted to view this route")
+  }
+  req.user = verifiedToken
+  next()
+  } catch (error) {
+    console.log("jwt error", error);
+    next(error)
+  }
+  
+}
+
+  2.If getting any error I will tell tsconfig forcefully about the path of the file. [only apply when error shown]
+  tsconfig.json > fold "compilerOptions":{...}, 
+                       "include":["./src/app/interfaces/index.d.ts]
+  
