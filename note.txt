@@ -1,0 +1,80 @@
+28-2 Implement refresh token to get new access token
+
+-- Create a utils function for handle accessToken and refreshToken
+src>app>utils>usersToken.ts
+export const createUsersToken = (user : Partial<IUser>) =>{
+  const jwtPayload = {
+      userId : user._id, //> add a _id on user interface from mongoose Types.ObjectId
+      email: user.email,
+      role: user.role
+    }
+  
+    const accessToken = generateToken(jwtPayload, envVars.JWT_ACCESS_SECRET, envVars.JWT_ACCESS_EXPIRES)
+    const refreshToken = generateToken(jwtPayload, envVars.JWT_REFRESH_SECRET, envVars.JWT_REFRESH_EXPIRES)
+
+
+    return{
+      accessToken, refreshToken
+    }
+}
+
+update auth.services.ts
+
+import  httpStatus  from 'http-status-codes';
+import AppError from "../../errorHelpers/AppError"
+import { IUser } from "../user/user.interface"
+import { User } from "../user/user.model"
+import bcryptjs from "bcryptjs";
+import { createUsersToken } from '../../utils/usersToken';
+
+const credentialsLogin = async(payload : Partial<IUser>) => {
+  const {email , password} = payload
+
+  const isUserExist = await User.findOne({email})
+
+  if(!isUserExist){
+    throw new AppError(httpStatus.BAD_REQUEST, "Email does not exist")
+  }
+
+  const isPasswordMatched = await bcryptjs.compare(password as string, isUserExist.password as string)
+
+  if(!isPasswordMatched){
+    throw new AppError(httpStatus.BAD_REQUEST, "Incorrect Password")
+  }
+
+  const userToken = createUsersToken(isUserExist)
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const {password : pass, ...rest} = isUserExist.toObject()
+
+  return{
+    accessToken : userToken.accessToken,
+    refreshToken : userToken.refreshToken,
+    rest
+  }
+}
+
+export const AuthServices = {
+  credentialsLogin
+}
+
+
+continue from 6:33
+
+#Refresh Token API CREATION---------------------
+1. auth.route.ts
+   router.post("/refresh-token" , AuthController.credentialsLogin)
+
+2. auth.Controller.ts
+const getNewAccessToken = catchAsync(async(req: Request, res: Response, next: NextFunction) => {
+  
+  const tokenInfo = await AuthServices.getNewAccessToken( )
+
+  sendResponse(res, {
+    success: true,
+    statusCode : httpStatus.OK,
+    message: "User Logged In Successfully",
+    data: tokenInfo 
+  })
+})
+
