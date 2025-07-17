@@ -1,71 +1,80 @@
-27-11 Add custom property to Request Parameter of Express, req.user
+28-2 Implement refresh token to get new access token
 
-todo: will create a express custom property to store verified token
-
-it will mitigate the jwt verification
-
-BEFORE: 1. const token = req.headers.authorization
-        2. const verifiedToken = verifyToken(token as string, envVars.JWT_ACCESS_SECRET) as JwtPayload
-
-After:  1. const verifiedToken = req.user
-
-Step:
-  1. create a Interface folder in src>app>interface>index.d.ts
-  it will be a global interface file [thats imp to create this folder inside app folder]
-  
-  import { JwtPayload } from 'jsonwebtoken';
-  declare global {
-  namespace Express {
-    interface Request {
-      user : JwtPayload
-      }
+-- Create a utils function for handle accessToken and refreshToken
+src>app>utils>usersToken.ts
+export const createUsersToken = (user : Partial<IUser>) =>{
+  const jwtPayload = {
+      userId : user._id, //> add a _id on user interface from mongoose Types.ObjectId
+      email: user.email,
+      role: user.role
     }
+  
+    const accessToken = generateToken(jwtPayload, envVars.JWT_ACCESS_SECRET, envVars.JWT_ACCESS_EXPIRES)
+    const refreshToken = generateToken(jwtPayload, envVars.JWT_REFRESH_SECRET, envVars.JWT_REFRESH_EXPIRES)
+
+
+    return{
+      accessToken, refreshToken
+    }
+}
+
+update auth.services.ts
+
+import  httpStatus  from 'http-status-codes';
+import AppError from "../../errorHelpers/AppError"
+import { IUser } from "../user/user.interface"
+import { User } from "../user/user.model"
+import bcryptjs from "bcryptjs";
+import { createUsersToken } from '../../utils/usersToken';
+
+const credentialsLogin = async(payload : Partial<IUser>) => {
+  const {email , password} = payload
+
+  const isUserExist = await User.findOne({email})
+
+  if(!isUserExist){
+    throw new AppError(httpStatus.BAD_REQUEST, "Email does not exist")
   }
 
-  step 2: 
-  update user.controller & checkAuth
+  const isPasswordMatched = await bcryptjs.compare(password as string, isUserExist.password as string)
 
-  const updateUser = catchAsync(async(req: Request, res: Response, next: NextFunction) => {
-  const userId = req.params.id;
-  // const token = req.headers.authorization
-  // const verifiedToken = verifyToken(token as string, envVars.JWT_ACCESS_SECRET) as JwtPayload
+  if(!isPasswordMatched){
+    throw new AppError(httpStatus.BAD_REQUEST, "Incorrect Password")
+  }
 
-  const verifiedToken = req.user
+  const userToken = createUsersToken(isUserExist)
 
-  const payload = req.body
-  const user = await userServices.updateUser(userId, payload, verifiedToken)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const {password : pass, ...rest} = isUserExist.toObject()
+
+  return{
+    accessToken : userToken.accessToken,
+    refreshToken : userToken.refreshToken,
+    rest
+  }
+}
+
+export const AuthServices = {
+  credentialsLogin
+}
+
+
+continue from 6:33
+
+#Refresh Token API CREATION---------------------
+1. auth.route.ts
+   router.post("/refresh-token" , AuthController.credentialsLogin)
+
+2. auth.Controller.ts
+const getNewAccessToken = catchAsync(async(req: Request, res: Response, next: NextFunction) => {
+  
+  const tokenInfo = await AuthServices.getNewAccessToken( )
 
   sendResponse(res, {
     success: true,
-    statusCode : httpStatus.CREATED,
-    message: "User Updated Successfully",
-    data: user
+    statusCode : httpStatus.OK,
+    message: "User Logged In Successfully",
+    data: tokenInfo 
   })
 })
 
-  export const checkAuth = (...authRoles : string[]) => async(req: Request, res: Response, next: NextFunction) =>{
-  try {
-    const accessToken = req.headers.authorization
-  
-  if(!accessToken){
-    throw new AppError(403, "No Token Received")
-  }
-
-  const verifiedToken = verifyToken(accessToken, envVars.JWT_ACCESS_SECRET) as JwtPayload   
-
-  if(!authRoles.includes(verifiedToken.role)){
-    throw new AppError (403, "You are not permitted to view this route")
-  }
-  req.user = verifiedToken
-  next()
-  } catch (error) {
-    console.log("jwt error", error);
-    next(error)
-  }
-  
-}
-
-  2.If getting any error I will tell tsconfig forcefully about the path of the file. [only apply when error shown]
-  tsconfig.json > fold "compilerOptions":{...}, 
-                       "include":["./src/app/interfaces/index.d.ts]
-  

@@ -17,6 +17,19 @@ const credentialsLogin = catchAsync(async(req: Request, res: Response, next: Nex
   })
 })
 
+
+const getNewAccessToken = catchAsync(async(req: Request, res: Response, next: NextFunction) => {
+  
+  const tokenInfo = await AuthServices.credentialsLogin(req.body)
+
+  sendResponse(res, {
+    success: true,
+    statusCode : httpStatus.OK,
+    message: "User Logged In Successfully",
+    data: tokenInfo 
+  })
+})
+
 export const AuthController = {
   credentialsLogin
 }
