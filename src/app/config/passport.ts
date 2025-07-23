@@ -23,9 +23,9 @@ passport.use(
 
         // if (!isUserExist) {
         //   return done(null, false, { message: "User Doesn't Exist" });
-        //    //` null: cause don't want to send err, false: cause user doesn't exist
+        //    //` null: cause don't want to send err, false: cause user doesn't exist 
         // }
-        // `👆🏾both👇🏾are same 
+        //` 👆🏾both👇🏾are same 
         if(!isUserExist){
           return done("User does not exist")
         }
