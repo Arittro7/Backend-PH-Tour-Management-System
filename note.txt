@@ -1,1 +1,25 @@
-//🔦
+//🔦super admin info from db
+
+_id
+68768bb1839ac758ca8229c4
+name
+"Super Admin"
+email
+"super@gmail.com"
+password
+"super@123"
+role
+"SUPER_ADMIN"
+isDeleted
+false
+isActive
+"ACTIVE"
+isVerified
+true
+
+auths
+Array (1)
+createdAt
+2025-07-15T17:11:13.811+00:00
+updatedAt
+2025-07-20T06:11:32.866+00:00
