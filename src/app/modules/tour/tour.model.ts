@@ -12,7 +12,7 @@ export const TourTypes = model<ITourTypes>("TourType", tourTypesSchema)
 const tourSchema = new Schema<ITour>(
   {
     title: { type: String, required: true },
-    slug: { type: String, required: true, unique: true },
+    slug: { type: String, unique: true },
     description: {type: String},
     images:{type:[String], default:[]},
     location:{type:String},
@@ -42,11 +42,10 @@ const tourSchema = new Schema<ITour>(
 );
 
 tourSchema.pre("save", async function (next) {
-
-  if (this.isModified("name")) {
+  if (this.isModified("title")) {
     const baseSlug = this.title.toLowerCase().split(" ").join("-");
-    let slug = `${baseSlug}-division`;
-
+    let slug = `${baseSlug}`;
+  
     let counter = 0;
     while (await Tour.exists({ slug })) {
       slug = `${slug}-${counter++}`;
@@ -54,7 +53,6 @@ tourSchema.pre("save", async function (next) {
 
     this.slug = slug;
   }
-
   next();
 });
 
@@ -83,5 +81,5 @@ export const Tour = model<ITour>("Tour", tourSchema)
 //>----------------------------------------<//
 
 /**
- * `Division and Tour type are two different collection. To link with other collection 1. ObjectId of that collection is req. thats why Schema.Types used from mongoose 2. Referencing with that collection using ref: "ModelName" (make sure model is created like division.model.ts)   
+ * `Division and Tour type are two different collection. To link with other collection 1. ObjectId of that collection is req. thats why Schema.Types used from mongoose & 2. Referencing with that collection using ref: "ModelName" (make sure model is created like division.model.ts)   
  */
