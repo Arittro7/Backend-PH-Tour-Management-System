@@ -1,50 +1,53 @@
 import { model, Schema } from "mongoose";
 import { IDivision } from "./division.interface";
 
-const divisionSchema = new Schema<IDivision>({
-  name: {type: String, required: true, unique: true},
-  slug: {type: String, unique: true},
-  thumbnail: {type: String},
-  description: {type: String}
-},{
-  timestamps:true,
-})
+const divisionSchema = new Schema<IDivision>(
+  {
+    name: { type: String, required: true, unique: true },
+    slug: { type: String, unique: true },
+    thumbnail: { type: String },
+    description: { type: String },
+  },
+  {
+    timestamps: true,
+  }
+);
 
-// ---
 divisionSchema.pre("save", async function (next) {
-    if (this.isModified("name")) {
-        const baseSlug = this.name.toLowerCase().split(" ").join("-")
-        let slug = `${baseSlug}-division`
+  //save used for both doc create or save
 
-        let counter = 0;
-        while (await Division.exists({ slug })) {
-            slug = `${slug}-${counter++}` // dhaka-division-2
-        }
+  if (this.isModified("name")) {
+    const baseSlug = this.name.toLowerCase().split(" ").join("-");
+    let slug = `${baseSlug}-division`;
 
-        this.slug = slug;
+    let counter = 0;
+    while (await Division.exists({ slug })) {
+      slug = `${slug}-${counter++}`;
     }
-    next()
-})
+
+    this.slug = slug;
+  }
+
+  next();
+});
 
 divisionSchema.pre("findOneAndUpdate", async function (next) {
-    const division = this.getUpdate() as Partial<IDivision>
+  const division = this.getUpdate() as Partial<IDivision>;
 
-    if (division.name) {
-        const baseSlug = division.name.toLowerCase().split(" ").join("-")
-        let slug = `${baseSlug}-division`
+  if (division.name) {
+    const baseSlug = division.name.toLowerCase().split(" ").join("-");  //👈---------
+    let slug = `${baseSlug}-division`;
 
-        let counter = 0;
-        while (await Division.exists({ slug })) {
-            slug = `${slug}-${counter++}` // dhaka-division-2
-        }
-
-        division.slug = slug
+    let counter = 0;
+    while (await Division.exists({ slug })) {               //This portion cut from d.service
+      slug = `${slug}-${counter++}`; 
     }
 
-    this.setUpdate(division)
+    division.slug = slug;                                               //👈----------
+  }
 
-    next()
-})
-// ---
+  this.setUpdate(division)
+  next();
+});
 
-export const Division = model<IDivision>("Division", divisionSchema)
+export const Division = model<IDivision>("Division", divisionSchema);
