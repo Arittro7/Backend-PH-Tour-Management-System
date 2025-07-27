@@ -12,9 +12,9 @@ const createTour = async (payload: ITour) => {
     return tour;
 };
 
-const getAllTours = async () => {
-
-    const tours = await Tour.find({location: "Rangpur"})
+const getAllTours = async (query : Record<string,string>) => {
+    
+    const tours = await Tour.find(query)
     const totalTours = await Tour.countDocuments()
     
     return {
