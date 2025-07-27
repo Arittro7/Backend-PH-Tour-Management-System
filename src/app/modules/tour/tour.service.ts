@@ -1,6 +1,3 @@
-
-import { QueryBuilder } from "../../utils/QueryBuilder";
-import { tourSearchableFields } from "./tour.constant";
 import { ITour, ITourTypes,} from "./tour.interface";
 import { Tour, TourTypes,  } from "./tour.model";
 
@@ -15,10 +12,9 @@ const createTour = async (payload: ITour) => {
     return tour;
 };
 
-//`all tour getting fn before query added 
 const getAllTours = async () => {
 
-    const tours = await Tour.find({})
+    const tours = await Tour.find({location: "Rangpur"})
     const totalTours = await Tour.countDocuments()
     
     return {
