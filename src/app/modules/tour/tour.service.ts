@@ -22,13 +22,17 @@ const getAllTours = async (query: Record<string, string>) => {
     .sort()
     .fields()
     .paginate()
-    .build(); //its represent the model query and It's must called at the end
 
-  const meta = await queryBuilder.getMeta()
+  //   const meta = await queryBuilder.getMeta()
+
+  const [data, meta] = await Promise.all([
+    tours.build(),
+    queryBuilder.getMeta(), // make sure getMeta call after build as it destructured as meta after data
+  ]);
 
   return {
-    data: tours,
-    meta: meta,
+    data,
+    meta,
   };
 };
 
