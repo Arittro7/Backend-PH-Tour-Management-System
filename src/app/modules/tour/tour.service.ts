@@ -34,13 +34,9 @@ const getAllTours = async (query: Record<string, string>) => {
       [field]: { $regex: searchTerm, $options: "i" },
     })),
   };
-  const tours = await Tour.find(searchQuery);
-  const totalTours = await Tour.countDocuments()
-    .find(filter)
-    .sort(sort)
-    .select(fields)
-    .skip(skip)
-    .limit(limit);
+  const tours = await Tour.find(searchQuery).find(filter).sort(sort).select(fields).skip(skip).limit(limit);
+
+  const totalTours = await Tour.countDocuments();
 
   return {
     data: tours,
