@@ -41,6 +41,7 @@ export class QueryBuilder<T> {
 
         return this;
     }
+
     fields(): this {
 
         const fields = this.query.fields?.split(",").join(" ") || ""
@@ -49,6 +50,7 @@ export class QueryBuilder<T> {
 
         return this;
     }
+
     paginate(): this {
 
         const page = Number(this.query.page) || 1
@@ -63,6 +65,7 @@ export class QueryBuilder<T> {
     build() {
         return this.modelQuery
     }
+    //`the modelQuery req to add but not call at the end of the all query like in getAllTours. By add this here now i don't need to call it other function where this QueryBuilder will used instead i Will call the build() fn 
 
     async getMeta() {
         const totalDocuments = await this.modelQuery.model.countDocuments()
