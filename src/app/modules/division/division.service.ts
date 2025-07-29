@@ -11,6 +11,23 @@ const createDivision = async (payload: IDivision) => {
     return division   
 };
 
+// const getAllDivisions = async (query: Record<string,string>) => {
+//     // query builder applied by my self
+//     const queryBuilder = new QueryBuilder(Division.find(), query)
+
+//     const divisions = await queryBuilder.search(divisionSearchableFields).filter().sort().fields().paginate()
+
+//     const [data, meta] = await Promise.all([
+//         divisions.build(),
+//         queryBuilder.getMeta()
+//     ])
+
+//     return{
+//         data,
+//         meta
+//     }
+// };
+
 const getAllDivisions = async () => {
     const divisions = await Division.find({});
     const totalDivisions = await Division.countDocuments();
@@ -21,15 +38,12 @@ const getAllDivisions = async () => {
         }
     }
 };
-
-const getSingleDivision = async (slug: string) => {
-    const division = await Division.findOne({ slug });
-    return {
-        data: division,
+const getSingleDivision = async (slug : string) => {
+    const division = await Division.findOne({slug});
+    return{
+        data: division
     }
 };
-
-
 
 const updateDivision = async (id: string, payload: Partial<IDivision>) => {
 
