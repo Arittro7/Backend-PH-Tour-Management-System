@@ -1,13 +1,48 @@
+import httpStatus  from 'http-status-codes';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import AppError from "../../errorHelpers/AppError";
 import { BOOKING_STATUS } from "../booking/booking.interface";
 import { Booking } from "../booking/booking.model";
 import { PAYMENT_STATUS } from "./payment.interface";
 import { Payment } from "./payment.model";
+import { ISSLCommerz } from '../SSLCommerz/sslCommerz.interface';
+import { SSlService } from '../SSLCommerz/sslCommerz.service';
+
+const initPayment = async(bookingId: string) =>{
+  const payment = await Payment.findOne({booking: bookingId})
+
+  if(!payment){
+    throw new AppError(httpStatus.NOT_FOUND, "Payment not found. You have not booked this tour")
+  }
+
+  const booking = await Booking.findById(payment.booking)
+  
+        const userAddress = (booking?.user as any).address
+        const userEmail = (booking?.user as any).email
+        const userPhone = (booking?.user as any).phone
+        const userName = (booking?.user as any).name
+        
+        // create ssl payload
+        const sslPayload : ISSLCommerz = { //❌ I forgot to import ISSL in createBooking in service
+          address : userAddress,
+          email: userEmail,
+          phoneNumber: userPhone,
+          name: userName,
+          amount : payment.amount, //🚩 changed 
+          transactionId: payment.transactionId //🚩 changed
+        }
+        const sslPayment = await SSlService.sslPaymentInit(sslPayload)
+  // copied from booking.service (createBooking)
+
+  return{
+    paymentUrl : sslPayment.GatewayPageURL
+  }
+}
 
 const successPayment = async(query: Record<string, string>) => {
   
-  //🚩 Copy & Paste the function from createBooking and modify here [🚩- Changes]
+  //🚩 Copy & Paste the function from createBooking(controller) and modify here [🚩- Changes]
   const session = await Booking.startSession(); //🚩- imp Booking
   session.startTransaction();
 
@@ -32,15 +67,13 @@ const successPayment = async(query: Record<string, string>) => {
       UpdatedPayment?.booking,
       // { payment: payment[0]._id }, ❌❌❌
       {status: BOOKING_STATUS.COMPLETE}, //🚩
-      { new: true, runValidators: true, session } //🚩 
+      {runValidators: true, session } //🚩 remove new true
     )
-      .populate("user", "name email phone address")
-      .populate("tour", "title costFrom")
-      .populate("payment");
 
       /**
        * 🚩 On updatedBooking
-       *  Instead of booking[0]._id I will get the booking from updatedPayment?.booking
+       * Instead of booking[0]._id I will get the booking from updatedPayment?.booking
+       * remove populates 
        */
 
       await session.commitTransaction() 
@@ -56,16 +89,67 @@ const successPayment = async(query: Record<string, string>) => {
   }
 }
 
-const failPayment = async() => {
+const failPayment = async(query: Record<string, string>) => {
 
+  const session = await Booking.startSession(); 
+  session.startTransaction();
+
+  try {
+
+    const UpdatedPayment = await Payment.findOneAndUpdate({transactionId:query.transactionId}, {
+      status: PAYMENT_STATUS.FAILED,  //🚩 change the status to failed
+    },{ new: true, runValidators: true, session });
+    
+    await Booking.findByIdAndUpdate(
+      UpdatedPayment?.booking,
+      {status: BOOKING_STATUS.FAILED}, //🚩Change the status to failed
+      { runValidators: true, session }  //🚩remove new true
+    )
+
+      await session.commitTransaction() 
+      session.endSession()
+
+    return {
+      success: false, message: "Payment Failed" //🚩Change the message
+    }
+  } catch (error) {
+    await session.abortTransaction() 
+    session.endSession()
+    throw error 
+  }
 }
 
-const cancelPayment = async() => {
+const cancelPayment = async(query: Record<string, string>) => {
+  const session = await Booking.startSession(); 
+  session.startTransaction();
 
+  try {
+
+    const UpdatedPayment = await Payment.findOneAndUpdate({transactionId:query.transactionId}, {
+      status: PAYMENT_STATUS.CANCELLED, //🚩 change status to cancel
+    },{ runValidators: true, session });
+    
+    await Booking.findByIdAndUpdate(
+      UpdatedPayment?.booking,
+      {status: BOOKING_STATUS.CANCEL}, //🚩 change status to cancel
+      { runValidators: true, session } 
+    )
+      await session.commitTransaction() 
+      session.endSession()
+
+    return {
+      success: false, message: "Payment Canceled"
+    }
+  } catch (error) {
+    await session.abortTransaction() 
+    session.endSession()
+    throw error 
+  }
 }
 
 export const PaymentService ={
   successPayment,
   failPayment,
-  cancelPayment
+  cancelPayment,
+  initPayment
 }

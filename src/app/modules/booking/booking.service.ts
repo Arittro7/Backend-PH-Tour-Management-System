@@ -8,6 +8,7 @@ import { Payment } from "../payment/payment.model";
 import { PAYMENT_STATUS } from "../payment/payment.interface";
 import { Tour } from "../tour/tour.model";
 import { SSlService } from "../SSLCommerz/sslCommerz.service";
+import { ISSLCommerz } from "../SSLCommerz/sslCommerz.interface";
 
 const getTransactionId = () => {
   return `tran_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
@@ -72,7 +73,7 @@ const createBooking = async (payload: Partial<IBooking>, userId: string) => {
       const userName = (updatedBooking?.user as any).name
       
       // create ssl payload
-      const sslPayload = {
+      const sslPayload : ISSLCommerz = {
         address : userAddress,
         email: userEmail,
         phoneNumber: userPhone,
