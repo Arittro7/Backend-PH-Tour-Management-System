@@ -9,6 +9,7 @@ import { PAYMENT_STATUS } from "../payment/payment.interface";
 import { Tour } from "../tour/tour.model";
 import { SSlService } from "../SSLCommerz/sslCommerz.service";
 import { ISSLCommerz } from "../SSLCommerz/sslCommerz.interface";
+import { QueryBuilder } from "../../utils/QueryBuilder";
 
 const getTransactionId = () => {
   return `tran_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
@@ -105,21 +106,67 @@ const createBooking = async (payload: Partial<IBooking>, userId: string) => {
   }
 };
 
-const getUserBookings = async () => {
-  return {};
+const getUserBookings = async (
+  query: Record<string, string>,
+  userId: string
+) => {
+  const queryElement = new QueryBuilder(Booking.find({ user: userId }), query);
+
+  const bookings = queryElement.filter().sort().fields().paginate();
+
+  const [data, meta] = await Promise.all([
+    bookings.build(),
+    queryElement.getMeta(),
+  ]);
+
+  return {
+    data,
+    meta,
+  };
 };
 
-const getBookingById = async () => {
-  return {};
+const getBookingById = async (_id: string) => {
+  const singleBooking = await Booking.findById(_id);
+
+  return {
+    data: singleBooking,
+  };
 };
 
-const updateBookingStatus = async () => {
-  return {};
+
+const updateBookingStatus = async (_id: string, payload: Partial<IBooking>) => {
+  const isBookingExist = await Booking.findById(_id);
+
+  if (!isBookingExist) {
+    throw new AppError(400, "No Booking exist to update.");
+  }
+
+  const updatedBooking = await Booking.findByIdAndUpdate(_id, payload, {
+    new: true,
+    runValidators: true,
+  });
+
+  return {
+    data: updatedBooking,
+  };
 };
 
-const getAllBookings = async () => {
-  return {};
+const getAllBookings = async (query: Record<string, string>) => {
+  const queryElement = new QueryBuilder(Booking.find(), query);
+
+  const bookings = queryElement.filter().sort().fields().paginate();
+
+  const [data, meta] = await Promise.all([
+    bookings.build(),
+    queryElement.getMeta(),
+  ]);
+
+  return {
+    data,
+    meta,
+  };
 };
+
 
 export const BookingService = {
   createBooking,

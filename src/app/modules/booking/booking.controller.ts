@@ -16,30 +16,37 @@ const createBooking = catchAsync(async (req: Request, res: Response) => {
   })
 })
 
+const getAllBookings = catchAsync(
+  async (req: Request, res: Response) => {
+    const query = req.query as Record<string, string>;
 
+    const result = await BookingService.getAllBookings(query);
 
-const getAllBookings = catchAsync(async( req: Request, res: Response) => {
-  const bookings = await BookingService.getAllBookings()
-  
-  sendResponse(res, {
-    statusCode: 200,
-    success: true,
-    message: "Bookings retrieved Successfully",
-    data: bookings
-  })
-})
-
+    sendResponse(res, {
+      statusCode: 201,
+      success: true,
+      message: "Booking created",
+      data: result.data,
+      meta: result.meta,
+    });
+  }
+);
 
 const getUserBookings = catchAsync(async(req: Request, res: Response) =>{
-  const bookings = await BookingService.getUserBookings()  
+  const query = req.query as Record<string, string>;
+    const user = req.user as JwtPayload;
 
-  sendResponse(res,{
-    statusCode: 200,
-    success:true,
-    message: "Successfully",
-    data: bookings
-  })
-})
+    const result = await BookingService.getUserBookings(query, user.userId);
+
+    sendResponse(res, {
+      statusCode: 201,
+      success: true,
+      message: "Booking created",
+      data: result.data,
+      meta: result.meta,
+    });
+  }
+);
 
 // const getSingleBooking = catchAsync(async(req: Request, res: Response) =>{
 //   const booking = await BookingService.getSingleBookingById()
@@ -53,15 +60,18 @@ const getUserBookings = catchAsync(async(req: Request, res: Response) =>{
 // })
 
 const updateBookingStatus = catchAsync(async(req: Request, res: Response) =>{
-  const updated = await BookingService.updateBookingStatus()  
+  const _id = req.params.id;
 
-  sendResponse(res,{
-    statusCode: 200,
-    success:true,
-    message: "Successfully",
-    data: updated
-  })
-})
+    const result = await BookingService.updateBookingStatus(_id, req.body);
+
+    sendResponse(res, {
+      statusCode: 201,
+      success: true,
+      message: "Booking created",
+      data: result.data,
+    });
+  }
+);
 
 export const BookingController = {
   createBooking,
