@@ -1,3 +1,4 @@
+import { deleteImageFromCloudinary } from "../../config/cloudinary.config";
 import { IDivision } from "./division.interface";
 import { Division } from "./division.model";
 
@@ -62,6 +63,11 @@ const updateDivision = async (id: string, payload: Partial<IDivision>) => {
     }
 
     const updatedDivision = await Division.findByIdAndUpdate(id, payload, { new: true, runValidators: true })
+
+    // cloudinary update & its must be done after mongodb update operation👆
+    if(payload.thumbnail && existingDivision.thumbnail){
+        await deleteImageFromCloudinary(existingDivision.thumbnail)
+    }
 
     return updatedDivision
 
