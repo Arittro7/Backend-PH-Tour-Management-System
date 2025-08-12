@@ -3,6 +3,11 @@ import { AnyZodObject } from "zod";
 
 export const validateRequest = (zodSchema: AnyZodObject) => async(req: Request, res: Response, next: NextFunction) =>{
   try {
+    // req.body = JSON.parse(req.body.data) || req.body
+    // Instead of this 👆🏼 I will do this 👇 as it is more safer options
+    if(req.body.data){
+      req.body = JSON.parse(req.body.data)
+    }
     req.body = await zodSchema.parseAsync(req.body)
     next()
   } catch (error) {
