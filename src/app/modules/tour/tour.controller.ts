@@ -34,8 +34,13 @@ const getAllTours = catchAsync(async (req: Request, res: Response) => {
 });
 
 const updateTour = catchAsync(async (req: Request, res: Response) => {
+    //just copy it from createTour fn and paste here & then pass the payload as parameter of result variable of updateTour fn
+    const payload : ITour ={
+        ...req.body,
+        images: (req.files as Express.Multer.File[]).map(file => file.path)
+    }
 
-    const result = await TourService.updateTour(req.params.id, req.body);
+    const result = await TourService.updateTour(req.params.id, payload);
     sendResponse(res, {
         statusCode: 200,
         success: true,

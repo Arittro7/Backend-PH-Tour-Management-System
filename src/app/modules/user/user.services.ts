@@ -5,15 +5,17 @@ import { User } from "./user.model";
 import bcryptjs from "bcryptjs";
 import { envVars } from "../../config/env";
 import { JwtPayload } from "jsonwebtoken";
+import { QueryBuilder } from "../../utils/QueryBuilder";
+import { userSearchableFields } from "./user.constant";
 
 const createUser = async (payload: Partial<IUser>) => {
   const { email, password, ...rest } = payload;
 
   const isUserExist = await User.findOne({ email });
 
-  // if (isUserExist) {
-  //   throw new AppError(httpStatus.BAD_REQUEST, "User Already Exist");
-  // }
+  if (isUserExist) {
+    throw new AppError(httpStatus.BAD_REQUEST, "User Already Exist");
+  }
 
   const hashedPassword = await bcryptjs.hash(password as string, Number(envVars.BCRYPT_SALT_ROUND));
 
@@ -74,21 +76,47 @@ const updateUser = async(userId: string, payload: Partial<IUser>, decodedToken: 
     return newUpdatedUser
 
 }
+// update the function get me
+const getAllUsers = async (query: Record<string, string>) => {
 
-async function getAllUsers() {
-  const users = await User.find({});
-  const totalUsers = await User.countDocuments();
+    const queryBuilder = new QueryBuilder(User.find(), query)
+    const usersData = queryBuilder
+        .filter()
+        .search(userSearchableFields) // file create get-me
+        .sort()
+        .fields()
+        .paginate();
 
-  return {
-    data: users,
-    meta: {
-      total: totalUsers,
-    },
-  };
-}
+    const [data, meta] = await Promise.all([
+        usersData.build(),
+        queryBuilder.getMeta()
+    ])
+
+    return {
+        data,
+        meta
+    }
+};
+
+// added the missed-out route |get-me 
+const getSingleUser = async (id: string) => {
+    const user = await User.findById(id).select("-password");
+    return {
+        data: user
+    }
+};
+
+const getMe = async (userId: string) => {
+    const user = await User.findById(userId).select("-password");
+    return {
+        data: user
+    }
+};
 
 export const userServices = {
   createUser,
   getAllUsers,
-  updateUser
+  updateUser,
+  getSingleUser,
+  getMe
 };

@@ -21,6 +21,7 @@ export interface ITour{
   tourPlan ?: string[];
   maxGuest ?: number;
   minAge ?: number;
-  division : Types.ObjectId
-  tourType : Types.ObjectId //> Filter will applied based on tour type(short, long, week etc). Another file will created to contain tour types.
+  division : Types.ObjectId;
+  tourType : Types.ObjectId;
+  deleteImages ?: string[]
 }

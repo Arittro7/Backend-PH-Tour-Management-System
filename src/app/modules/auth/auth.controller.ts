@@ -112,6 +112,38 @@ const resetPassword = catchAsync(async(req: Request, res: Response, next: NextFu
   })
 })
 
+const changePassword = catchAsync(async(req: Request, res: Response, next: NextFunction) => {
+  const oldPassword = req.body.oldPassword
+  const newPassword = req.body.newPassword
+  const decodedToken = req.user
+  await AuthServices.resetPassword(oldPassword, newPassword, decodedToken as JwtPayload)
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Password Changed Successfully",
+    data: null
+  })
+})
+
+const setPassword = catchAsync(async(req: Request, res: Response, next: NextFunction) => {
+  
+  const decodedToken = req.user as JwtPayload
+  const {password} = req.body
+
+
+  await AuthServices.setPassword(decodedToken.userId, password)
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Password Changed Successfully",
+    data: null
+  })
+})
+
+
+
 const googleCallbackController = catchAsync(async(req: Request, res: Response, next: NextFunction) => {
   
   let redirectTo = req.query.state ? req.query.state as string : ""
@@ -136,5 +168,5 @@ const googleCallbackController = catchAsync(async(req: Request, res: Response, n
 
 
 export const AuthController = {
-  credentialsLogin, getNewAccessToken, logout, resetPassword, googleCallbackController
+  credentialsLogin, getNewAccessToken, logout, resetPassword, changePassword, googleCallbackController, setPassword
 }
