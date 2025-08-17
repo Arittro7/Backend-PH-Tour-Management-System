@@ -23,11 +23,7 @@ export const checkAuth =
       ) as JwtPayload;
 
       const isUserExist = await User.findOne({ email: verifiedToken.email });
-
-      // added on 32-8 👇
-      /**
-       * the following checking will occurred when a user try to visit any protected route with valid access token
-       */
+      
       if (!isUserExist) {
         throw new AppError(httpStatus.BAD_REQUEST, "User does not exist");
       }
@@ -35,7 +31,7 @@ export const checkAuth =
         throw new AppError(httpStatus.BAD_REQUEST, "User is not verified");
       }
       
-      //following this three checking if statement will also applied on passport.ts 
+      //following this three 'checking if statement' will also applied on passport.ts 
       if (
         isUserExist.isActive === IsActive.BLOCKED ||
         isUserExist.isActive === IsActive.INACTIVE

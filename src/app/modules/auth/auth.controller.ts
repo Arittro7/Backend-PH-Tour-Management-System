@@ -142,6 +142,22 @@ const setPassword = catchAsync(async(req: Request, res: Response, next: NextFunc
   })
 })
 
+const forgotPassword = catchAsync(async(req: Request, res: Response, next: NextFunction) => {
+  
+  // as it will be a public route I don't need the token
+  // applied zod schema to make sure route should not work if email not provided
+  const {email} = req.body
+
+  await AuthServices.forgotPassword(email)
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Email sent Successfully",
+    data: null
+  })
+})
+
 
 
 const googleCallbackController = catchAsync(async(req: Request, res: Response, next: NextFunction) => {
@@ -168,5 +184,5 @@ const googleCallbackController = catchAsync(async(req: Request, res: Response, n
 
 
 export const AuthController = {
-  credentialsLogin, getNewAccessToken, logout, resetPassword, changePassword, googleCallbackController, setPassword
+  credentialsLogin, getNewAccessToken, logout, resetPassword, changePassword, googleCallbackController, setPassword, forgotPassword
 }

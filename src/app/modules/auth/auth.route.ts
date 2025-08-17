@@ -14,7 +14,8 @@ router.post("/reset-password", checkAuth(...Object.values(Role)), AuthController
 router.post("/change-password", checkAuth(...Object.values(Role)), AuthController.changePassword)
 router.post("/set-password", checkAuth(...Object.values(Role)), AuthController.setPassword)
 
-
+//32-11 create api for forget route
+router.post("/forgot-password", AuthController.forgotPassword) 
 
 router.get("/google", async(req:Request, res: Response, next: NextFunction) =>{
   const redirect = req.query.redirect || "/"
