@@ -10,12 +10,11 @@ const router = Router()
 router.post("/login" , AuthController.credentialsLogin)
 router.post("/refresh-token" , AuthController.getNewAccessToken)
 router.post("/logout", AuthController.logout)
-router.post("/reset-password", checkAuth(...Object.values(Role)), AuthController.resetPassword)
 router.post("/change-password", checkAuth(...Object.values(Role)), AuthController.changePassword)
 router.post("/set-password", checkAuth(...Object.values(Role)), AuthController.setPassword)
-
 //32-11 create api for forget route
 router.post("/forgot-password", AuthController.forgotPassword) 
+router.post("/reset-password", checkAuth(...Object.values(Role)), AuthController.resetPassword)
 
 router.get("/google", async(req:Request, res: Response, next: NextFunction) =>{
   const redirect = req.query.redirect || "/"

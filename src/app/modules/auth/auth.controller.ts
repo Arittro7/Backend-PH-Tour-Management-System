@@ -98,11 +98,14 @@ const logout = catchAsync(async(req: Request, res: Response, next: NextFunction)
   })
 })
 
+//>Modify function 
 const resetPassword = catchAsync(async(req: Request, res: Response, next: NextFunction) => {
-  const oldPassword = req.body.oldPassword
-  const newPassword = req.body.newPassword
+  // const oldPassword = req.body.oldPassword //>remove old password
+  // const {id, newPassword} = req.body //> remove if payload used
   const decodedToken = req.user
-  await AuthServices.resetPassword(oldPassword, newPassword, decodedToken as JwtPayload)
+  // as i use payload thats why req.body being used instated of newPassword & id
+  //zod validation must required if payload used
+  await AuthServices.resetPassword(req.body, decodedToken as JwtPayload)
 
   sendResponse(res, {
     success: true,
@@ -116,7 +119,7 @@ const changePassword = catchAsync(async(req: Request, res: Response, next: NextF
   const oldPassword = req.body.oldPassword
   const newPassword = req.body.newPassword
   const decodedToken = req.user
-  await AuthServices.resetPassword(oldPassword, newPassword, decodedToken as JwtPayload)
+  await AuthServices.changePassword(oldPassword, newPassword, decodedToken as JwtPayload)
 
   sendResponse(res, {
     success: true,

@@ -14,16 +14,31 @@ import { JwtPayload } from "jsonwebtoken";
 
 const createUser = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const user = await userServices.createUser(req.body);
-
+    const user = (await userServices.createUser(req.body));
+    const { password, ...rest} = user
     sendResponse(res, {
       success: true,
       statusCode: httpStatus.CREATED,
       message: "User Created Successfully",
-      data: user,
+      data: rest,
     });
   }
 );
+
+// const createUser = catchAsync(
+//   async (req: Request, res: Response, next: NextFunction) => {
+//     const user = await userServices.createUser(req.body);
+//     // Exclude password field before sending response
+//     const { password, ...userWithoutPassword } = user.toObject ? user.toObject() : user;
+
+//     sendResponse(res, {
+//       success: true,
+//       statusCode: httpStatus.CREATED,
+//       message: "User Created Successfully",
+//       data: userWithoutPassword,
+//     });
+//   }
+// );
 
 const updateUser = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
