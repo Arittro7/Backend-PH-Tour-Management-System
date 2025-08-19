@@ -21,15 +21,15 @@ passport.use(
       try {
         const isUserExist = await User.findOne({ email });
 
-        // if (!isUserExist) {
-        //   return done(null, false, { message: "User Doesn't Exist" });
-        //    //` null: cause don't want to send err, false: cause user doesn't exist
-        // }
-        //` 👆🏾both👇🏾are same
         if (!isUserExist) {
           return done("User does not exist");
         }
-        //:> 32-8 paste the 3 copied check statement from checkAuth.ts & the done method will use instead of threw appError
+
+        if (!isUserExist.isVerified) {
+          // throw new AppError(httpStatus.BAD_REQUEST, "User is not verified");
+          return done("User is not verified");
+        }
+
         if (
           isUserExist.isActive === IsActive.BLOCKED ||
           isUserExist.isActive === IsActive.INACTIVE
@@ -43,10 +43,7 @@ passport.use(
           return done("User is Deleted");
         }
 
-        if (isUserExist.isVerified) {
-          // throw new AppError(httpStatus.BAD_REQUEST, "User is not verified");
-          return done("User is not verified");
-        }
+        
 
         // after email(user) checking before matching the password we will check is the user google authenticate or not
 
@@ -92,7 +89,12 @@ passport.use(
       clientSecret: envVars.GOOGLE_CLIENT_SECRET,
       callbackURL: envVars.GOOGLE_CALLBACK_URL,
     },
-    async (accessToken: string, refreshToken: string, profile: Profile,done: VerifyCallback) => {
+    async (
+      accessToken: string,
+      refreshToken: string,
+      profile: Profile,
+      done: VerifyCallback
+    ) => {
       //🔦
       // >as its a async function will use try-catch
       try {
@@ -103,11 +105,14 @@ passport.use(
         }
         //:> 32-8 m
         let isUserExist = await User.findOne({ email });
-        if(isUserExist && !isUserExist.isVerified){
-          return done(null, false, {message:"User is not verified"})
+        if (isUserExist && !isUserExist.isVerified) {
+          return done(null, false, { message: "User is not verified" });
         }
 
-        if (isUserExist && (isUserExist.isActive === IsActive.BLOCKED || isUserExist.isActive === IsActive.INACTIVE)
+        if (
+          isUserExist &&
+          (isUserExist.isActive === IsActive.BLOCKED ||
+            isUserExist.isActive === IsActive.INACTIVE)
         ) {
           // throw new AppError(httpStatus.BAD_REQUEST,`User is ${isUserExist.isActive}`)
           return done(`User is ${isUserExist.isActive}`);
@@ -115,11 +120,11 @@ passport.use(
 
         if (isUserExist && isUserExist.isDeleted) {
           // throw new AppError(httpStatus.BAD_REQUEST, "User is deleted");
-          return done(null, false, {message:"User is Deleted"})
+          return done(null, false, { message: "User is Deleted" });
         }
 
         //[note: if google authentication failed I will redirect user to the frontend login page with some message on query -check auth.route.ts]
-        
+
         // create user if doesn't exist
         if (!isUserExist) {
           isUserExist = await User.create({

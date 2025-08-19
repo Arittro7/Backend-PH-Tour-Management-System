@@ -56,6 +56,7 @@ const getNewAccessToken = async (refreshToken: string) => {
 
 // const resetPassword = async (newPassword: string, id:string, decodedToken: JwtPayload) => {
 //instead of newPassword: string, id:string i can send payload
+
 const resetPassword = async (payload: Record<string, any>, decodedToken: JwtPayload) => {
  if(payload.id != decodedToken.userId){
   throw new AppError(401, "You Can not reset the password")
@@ -134,7 +135,6 @@ const setPassword = async (userId: string, plainPassword: string) => {
   //6
   await user.save();
 };
-
 
 const forgotPassword = async (email: string) => {
   //1. receive email as string in parameter

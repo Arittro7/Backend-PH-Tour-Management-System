@@ -13,38 +13,21 @@ import { JwtPayload } from "jsonwebtoken";
 import passport from "passport";
 
 const credentialsLogin = catchAsync(async(req: Request, res: Response, next: NextFunction) => {
-  
-  // const loginInfo = await AuthServices.credentialsLogin(req.body)
-  
-  passport.authenticate("local", async (err: any, user: any, info: any) => { //🔦
-    // passport named the credential based login process as local
+    
+  passport.authenticate("local", async (err: any, user: any, info: any) => { 
 
     if(err){
-      // ❌❌❌❌❌
-      // throw new AppError(401, "error message")
-      // next(err)
-      // return new AppError(401, err)
-      //` If i use any one of the above 3 it will failed to response 
-
-      // ✅✅✅✅✅
-      // return next(err) //` use any one of this
       return next(new AppError(401, err))
     }
 
     if(!user){
-      // return new AppError(401, info.message)
-      // return next(err)
       return next(new AppError(401, info.message))
     }
 
     const userTokens = await createUsersToken(user)
 
     const {password: pass, ...rest} = user.toObject()
-    //` I can use any one of this 👆🏾or👇🏾 to get user info except password 
-    // delete user.toObject().password
-
     setAuthCookie(res, userTokens)
-    //` setAuthCookie function will handle both access and refresh tokens functionality based on 
 
     sendResponse(res, {
     success: true,
@@ -57,9 +40,7 @@ const credentialsLogin = catchAsync(async(req: Request, res: Response, next: Nex
     }
   })
 
-  })(req,res,next) 
-  //` Manually required to trigger so that express can the fn within the fn 
-  
+  })(req,res,next)  
 })
 
 const getNewAccessToken = catchAsync(async(req: Request, res: Response, next: NextFunction) => {
@@ -161,8 +142,6 @@ const forgotPassword = catchAsync(async(req: Request, res: Response, next: NextF
   })
 })
 
-
-
 const googleCallbackController = catchAsync(async(req: Request, res: Response, next: NextFunction) => {
   
   let redirectTo = req.query.state ? req.query.state as string : ""
@@ -187,5 +166,12 @@ const googleCallbackController = catchAsync(async(req: Request, res: Response, n
 
 
 export const AuthController = {
-  credentialsLogin, getNewAccessToken, logout, resetPassword, changePassword, googleCallbackController, setPassword, forgotPassword
+  credentialsLogin, 
+  getNewAccessToken, 
+  logout, 
+  resetPassword, 
+  changePassword, 
+  googleCallbackController, 
+  setPassword, 
+  forgotPassword
 }
