@@ -8,6 +8,10 @@ import { PAYMENT_STATUS } from "./payment.interface";
 import { Payment } from "./payment.model";
 import { ISSLCommerz } from '../SSLCommerz/sslCommerz.interface';
 import { SSlService } from '../SSLCommerz/sslCommerz.service';
+import { generatePdf, IInvoiceData } from '../../utils/invoice';
+import { ITour } from '../tour/tour.interface';
+import { IUser } from '../user/user.interface';
+import { sendEmail } from '../../utils/sendEmail';
 
 const initPayment = async(bookingId: string) =>{
   const payment = await Payment.findOne({booking: bookingId})
@@ -49,9 +53,13 @@ const successPayment = async(query: Record<string, string>) => {
   try {
     //🚩 removed users' tour, amount, booking functionality 
 
-    const UpdatedPayment = await Payment.findOneAndUpdate({transactionId:query.transactionId}, {
+    const updatedPayment = await Payment.findOneAndUpdate({transactionId:query.transactionId}, {
       status: PAYMENT_STATUS.PAID,
     },{ new: true, runValidators: true, session });
+
+     if (!updatedPayment) { //🚩add new true for pdf
+            throw new AppError(401, "Payment not found")
+        }
     
     /**
      * 🚩
@@ -63,18 +71,48 @@ const successPayment = async(query: Record<string, string>) => {
      * note: remove [] from the second parameter & remove everything except payment status & change it to PAID
      */
 
-    await Booking.findByIdAndUpdate(
-      UpdatedPayment?.booking,
+    const updatedBooking = await Booking.findByIdAndUpdate( //🚩
+      updatedPayment?.booking,
       // { payment: payment[0]._id }, ❌❌❌
       {status: BOOKING_STATUS.COMPLETE}, //🚩
-      {runValidators: true, session } //🚩 remove new true
+      {new: true ,runValidators: true, session }//🚩add new true for pdf
     )
+    .populate("tour", "title")
+    .populate("user", "name email") //this is the correct way. got error defining it like ("user", "name", "email") this 
 
       /**
        * 🚩 On updatedBooking
        * Instead of booking[0]._id I will get the booking from updatedPayment?.booking
        * remove populates 
        */
+
+      if(!updatedBooking){
+        throw new AppError(401, "Booking not found")
+      }
+
+      const invoiceData : IInvoiceData = {
+        bookingDate: updatedBooking.createdAt as Date, //`🚩add createdAt on IBooking interface in booking.interface.ts
+        guestCount : updatedBooking.guestCount,
+        totalAmount: updatedPayment.amount,
+        tourTitle: (updatedBooking.tour as unknown as ITour).title,
+        transactionId: updatedPayment.transactionId,
+        userName: (updatedBooking.user as unknown as IUser).name
+      }
+      const pdfBuffer = await generatePdf(invoiceData)
+
+      await sendEmail({
+        to: (updatedBooking.user as unknown as IUser).email,
+        subject: " Your Booking Invoice ",
+        templateName: "Invoice", //create a invoice.ejs file
+        templateData: invoiceData,
+        attachments: [
+          {
+            filename: "invoice.pdf",
+            content: pdfBuffer,
+            contentType: "application/pdf"
+          }
+        ]
+      })
 
       await session.commitTransaction() 
       session.endSession()
